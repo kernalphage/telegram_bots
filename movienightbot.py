@@ -6,8 +6,8 @@ import random
 import requests
 print("Importing...")
 from movie_schema import User
-
-key="no key here"
+import bot_secrets
+key=bot_secrets.SECRET_TELEGRAM_KEY
 from telegram.ext import Updater
 from telegram.ext import CommandHandler
 from telegram.ext import InlineQueryHandler
