@@ -1,5 +1,7 @@
 # Databases created
 *.db
+# Secrets so i don't do what I did last time
+bot_secrets.py
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
