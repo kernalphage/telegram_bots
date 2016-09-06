@@ -7,6 +7,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import *
 from sqlalchemy.orm import *
+from sqlalchemy.sql import func
 
 print("Creating engine")
 
@@ -45,6 +46,10 @@ class Movie(Base):
 
 class User(Base):
     __tablename__ = "users"
+    def __init__(self, id, name):
+        self.name = name
+        self.id = id
+
     id = Column(Integer, primary_key =True)
     username = Column(String)
     def __repr__(self):
@@ -53,8 +58,9 @@ class User(Base):
 
 class Vote(Base):
     __tablename__ = "votes"
+
     id = Column(Integer, primary_key = True)
-    voterank = Column(Integer)
+    voterank = Column(Float)
     movie_id = Column(String, ForeignKey('movies.imdbID'))
     movie = relationship("Movie",back_populates="votes")
     user_id = Column(Integer,  ForeignKey('users.id'))

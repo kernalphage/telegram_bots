@@ -5,7 +5,8 @@
 import random
 import requests
 print("Importing...")
-from movie_schema import User, Movie, Chatroom, botSession
+import movie_schema
+from movie_schema import User, Movie, Vote, Chatroom, botSession
 import bot_secrets
 key=bot_secrets.SECRET_TELEGRAM_KEY
 from telegram.ext import *
@@ -14,6 +15,7 @@ import logging
 import re
 import urllib
 import json
+from sqlalchemy.sql import func
 updater = Updater(token=key)
 dispatcher = updater.dispatcher
 
@@ -103,15 +105,48 @@ def movie_selected(bot,update):
 
 def made_vote(bot, update):
 	callback = update.to_dict()["callback_query"];
+	movieID, vote = callback["data"].split("|")
+	userid = callback["from"]["id"]
+	if vote == "Y":
+		vote = 1
+	else:
+		vote = -.3
 
-	print("vote made {}({}) {}".format(callback["from"]["id"],callback["from"]["username"], callback["data"] ))
+	sesh = botSession()
+	usr = sesh.query(movie_schema.User).filter(movie_schema.User.id == userid).first()
+	if not usr:
+		usr = movie_schema.User(userid,callback["from"]["username"])
+		sesh.add(usr)
+
+	curvote = sesh.query(Vote).filter(Vote.user == usr
+		).filter(Vote.movie_id == movieID).first()
+	if not curvote:
+		print("Adding vote")
+		curvote = Vote()
+		curvote.movie_id = movieID;
+		curvote.user_id = userid
+		sesh.add(curvote)
+	else:
+		print("Changing vote")
+	curvote.voterank = vote
+	sesh.commit()
+
+	botSession.remove()
+	print("vote made {}({}) {}".format(userid,callback["from"]["username"], callback["data"] ))
 
 def get_scores(bot, update):
 	reply = "Movies suggested: \n"
-	i=1;
 	sesh = botSession()
-	for m in sesh.query(Movie.Title).all():
-		reply += "{}: {}\n".format(i, m)
+	sum_votes = func.sum(Vote.voterank).label("Score")
+	qry = sesh.query(Movie.Title, sum_votes
+		).join(Movie.votes
+		).group_by(Movie.Title
+		).order_by(sum_votes.desc())
+
+	i=0
+	for m in qry.all():
+		i+=1
+		reply += "{}: {} ({})\n".format(i, m.Title, m.Score)
 	botSession.remove()
 
 	bot.sendMessage(update.message.chat.id, reply, reply_to_message_id=update.message.message_id)
