@@ -41,6 +41,9 @@ print("chatting in room: {}".format(g_chat.id))
 
 it_me = 97858058
 
+def make_title(movie):
+	return "http://www.imdb.com/title/{imdbID} \n {Title} ({Year})".format(**movie)
+
 
 def vote_here(bot, update):
 	if(update.message.from_user.id != it_me):
@@ -69,7 +72,7 @@ def suggest_movie(bot, update):
 	movielist = list_movies(query)
 	print(query)
 	for movie in movielist[:5]:
-		full_title = "http://www.imdb.com/title/{imdbID} {Title} ({Year})".format(**movie)
+		full_title =  make_title(movie)
 		poster = movie["Poster"]
 		if poster == "N/A":
 			poster = "http://66.media.tumblr.com/0fd6af995e183fc99e4f44128930c632/tumblr_oaskifwYyi1t95h1uo1_500.jpg"
@@ -79,8 +82,10 @@ def suggest_movie(bot, update):
 	bot.answerInlineQuery(update.inline_query.id, results=results)
 
 def create_votes(imdbID):
-	keyboard = [[InlineKeyboardButton("Yes", callback_data=imdbID +'|Y')],
-				[InlineKeyboardButton("No", callback_data=imdbID  +'|N')] ]
+	keyboard = [[InlineKeyboardButton("Yes!", callback_data=imdbID +'|2'),
+				InlineKeyboardButton("yeah", callback_data=imdbID +'|1'),
+				InlineKeyboardButton("meh", callback_data=imdbID  +'|-.2'),
+				InlineKeyboardButton("No!", callback_data=imdbID  +'|-.5')] ]
 	return keyboard
 
 def movie_selected(bot,update):
@@ -101,16 +106,16 @@ def movie_selected(bot,update):
 	#movie = update.chosen_inline_result.id
 	keyboard = create_votes(inline_message_id);
 	reply_markup = InlineKeyboardMarkup(keyboard)
-	bot.sendMessage(g_chat.id, text="Like this movie?: ", reply_markup=reply_markup)
+	votename = make_title(g_moviecache[inline_message_id])
+
+	bot.sendMessage(g_chat.id, text= votename+"?" , reply_markup=reply_markup)
 
 def made_vote(bot, update):
 	callback = update.to_dict()["callback_query"];
 	movieID, vote = callback["data"].split("|")
 	userid = callback["from"]["id"]
-	if vote == "Y":
-		vote = 1
-	else:
-		vote = -.3
+
+	vote = float(vote)
 
 	sesh = botSession()
 	usr = sesh.query(movie_schema.User).filter(movie_schema.User.id == userid).first()
@@ -133,6 +138,8 @@ def made_vote(bot, update):
 
 	botSession.remove()
 	print("vote made {}({}) {}".format(userid,callback["from"]["username"], callback["data"] ))
+
+	#bot.editMessageText(text)
 
 def get_scores(bot, update):
 	reply = "Movies suggested: \n"
