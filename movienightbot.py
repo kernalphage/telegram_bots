@@ -15,6 +15,7 @@ import logging
 import re
 import urllib
 import json
+from uuid import uuid4
 from sqlalchemy.sql import func
 updater = Updater(token=key)
 dispatcher = updater.dispatcher
@@ -78,7 +79,8 @@ def suggest_movie(bot, update):
 			poster = "http://66.media.tumblr.com/0fd6af995e183fc99e4f44128930c632/tumblr_oaskifwYyi1t95h1uo1_500.jpg"
 
 		g_moviecache[movie["imdbID"]] = movie;
-		results.append( InlineQueryResultPhoto(id=movie["imdbID"], photo_url=poster, thumb_url=poster, caption=full_title))
+		uniqueID = "{}|{}".format(movie["imdbID"], uuid4())
+		results.append( InlineQueryResultPhoto(id=uniqueID, photo_url=poster, thumb_url=poster, caption=full_title))
 	bot.answerInlineQuery(update.inline_query.id, results=results)
 
 def create_votes(imdbID):
@@ -91,7 +93,7 @@ def create_votes(imdbID):
 def movie_selected(bot,update):
 
 	print(update.to_dict())
-	inline_message_id = update.chosen_inline_result["result_id"]
+	inline_message_id, _ = update.chosen_inline_result["result_id"].split("|")
 
 	sesh = botSession();
 	selectedMovie = sesh.query(Movie).filter(Movie.imdbID == inline_message_id).first()
@@ -101,6 +103,9 @@ def movie_selected(bot,update):
 		selectedMovie = Movie( g_moviecache[inline_message_id] )
 		sesh.add(selectedMovie)
 		sesh.commit()
+	else:
+		bot.sendMessage(g_chat.id, text="That movie has already been suggested!")
+		return
 	botSession.remove()
 
 	#movie = update.chosen_inline_result.id
