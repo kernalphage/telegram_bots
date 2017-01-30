@@ -47,9 +47,7 @@ def iamnot(bot, update, args):
         tag = tag.strip().strip(',').lower().rstrip('s')
         if not tag: continue
         if tag not in cur_room: continue
-        cur_tag = cur_room[tag].discard(user.username)
-        cur_tag.add(user.username)
-        cur_room[tag] = cur_tag;
+        cur_room[tag].discard(user.username)
      
     write_to_cache()
     bot.sendMessage(chat_id=update.message.chat_id,text="poof @{} is now {}".format(user.username, ', '.join(args)))
