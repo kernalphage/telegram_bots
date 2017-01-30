@@ -9,5 +9,7 @@ You will need:
 
 ## Configuration
 
-create a file called `bot_secrets.py` with the contents:
+create a file called `bot_secrets.py` in the pagingbot folder with the contents:
+```
 PAGING_BOT_KEY="GUID:I_GOTFROM_BOTFATHER"
+```
