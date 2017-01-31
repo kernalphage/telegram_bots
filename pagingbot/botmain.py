@@ -22,21 +22,28 @@ def write_to_cache():
     cache = open("chatroom.db", "wb")
     pickle.dump(chatroom_pages, cache)
 
+def sanitize_tag(tag):
+	_tag = "".join([c for c in tag if c in valid_chars])
+	_tag = _tag.rstrip('s')	
+	return _tag
 
 def iama(bot, update, args):
     global chatroom_pages
     chatid = update.message.chat_id
     cur_room = chatroom_pages.get(chatid, {})
     user = update.message.from_user
+    tags=0
     for tag in args:
-        tag = tag.strip().strip(',').lower().rstrip('s')
+        tag = sanitize_tag(tag)
         if not tag: continue
+        tags+=1
         cur_tag = cur_room.get(tag, set() )
         cur_tag.add(user.username)
         cur_room[tag] = cur_tag;
     chatroom_pages[chatid] = cur_room
     write_to_cache()
-    bot.sendMessage(chat_id=update.message.chat_id,text="poof @{} is now {}".format(user.username, ', '.join(args)))
+    if tags != 0:
+        bot.sendMessage(chat_id=update.message.chat_id,text="poof @{} is now {}".format(user.username, ', '.join(args)))
 
 def iamnot(bot, update, args):
     global chatroom_pages
@@ -44,13 +51,13 @@ def iamnot(bot, update, args):
     cur_room = chatroom_pages.get(chatid, {})
     user = update.message.from_user
     for tag in args:
-        tag = tag.strip().strip(',').lower().rstrip('s')
+        tag = sanitize_tag(tag)
         if not tag: continue
         if tag not in cur_room: continue
         cur_room[tag].discard(user.username)
      
     write_to_cache()
-    bot.sendMessage(chat_id=update.message.chat_id,text="poof @{} is now {}".format(user.username, ', '.join(args)))
+    bot.sendMessage(chat_id=update.message.chat_id,text="@{} is no longer a {}".format(user.username, ', '.join(args)))
 
 
 def whoarewe(bot, update):
@@ -60,19 +67,21 @@ def whoarewe(bot, update):
     msg = "Current tags: \n"
     for key in cur_room:
         msg += "\t{}: \t{}\n".format(key, ', '.join(cur_room.get(key, set())))
+    if cur_room == 97858058:
+        msg = "{}".format(chatroom_pages)
     bot.sendMessage(chat_id = chatid, text=msg)
 
 def tagging(bot, update, args):
     global chatroom_pages
 
     tags = ' '.join(args)
-    if ':' in tags:
-        tags, _ = tags.split(':')
+    tags = tags.splitlines()
+    
     chatid = update.message.chat_id
     cur_room = chatroom_pages.get(chatid, {})
     pings = set()
     for tag in tags.split(' '):
-        tag = tag.strip().strip(',').lower().rstrip('s')
+        tag = sanitize_tag(tag)
         if not tag: continue
         pings |= cur_room.get(tag, set())
     if not pings:
