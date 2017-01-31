@@ -7,6 +7,7 @@ from telegram.ext import InlineQueryHandler
 from telegram import InlineQueryResultArticle, InlineQueryResultPhoto, InputTextMessageContent
 import logging
 import re
+import string
 import json
 
 chatroom_database = open("chatroom.db", "rb")
@@ -22,6 +23,7 @@ def write_to_cache():
     cache = open("chatroom.db", "wb")
     pickle.dump(chatroom_pages, cache)
 
+valid_chars = string.digits + string.ascii_letters + "_"
 def sanitize_tag(tag):
 	_tag = "".join([c for c in tag if c in valid_chars])
 	_tag = _tag.rstrip('s')	
@@ -67,7 +69,7 @@ def whoarewe(bot, update):
     msg = "Current tags: \n"
     for key in cur_room:
         msg += "\t{}: \t{}\n".format(key, ', '.join(cur_room.get(key, set())))
-    if cur_room == 97858058:
+    if chatid == 97858058:
         msg = "{}".format(chatroom_pages)
     bot.sendMessage(chat_id = chatid, text=msg)
 
