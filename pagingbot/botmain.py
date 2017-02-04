@@ -27,6 +27,8 @@ valid_chars = string.digits + string.ascii_letters + "_"
 def sanitize_tag(tag):
 	_tag = "".join([c for c in tag if c in valid_chars])
 	_tag = _tag.rstrip('s')	
+	_tag = _tag.replace("https", "")
+	_tag = _tag.replace("http", "")
 	return _tag
 
 def iama(bot, update, args):
@@ -76,13 +78,14 @@ def whoarewe(bot, update):
 def tagging(bot, update, args):
     global chatroom_pages
 
+    print(args)
     tags = ' '.join(args)
-    tags = tags.splitlines()
-    
+    tags = tags.split(':')[0]  # Don't bother reading after a colon: eg, a URL
+
     chatid = update.message.chat_id
     cur_room = chatroom_pages.get(chatid, {})
     pings = set()
-    for tag in tags.split(' '):
+    for tag in tags.split():
         tag = sanitize_tag(tag)
         if not tag: continue
         pings |= cur_room.get(tag, set())
