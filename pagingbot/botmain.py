@@ -1,4 +1,4 @@
-#)!/usr/bin/python3
+#!/usr/bin/python3
 import bot_secrets
 import pickle
 from telegram.ext import Updater
