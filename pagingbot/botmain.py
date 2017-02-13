@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#)!/usr/bin/python3
 import bot_secrets
 import pickle
 from telegram.ext import Updater
@@ -27,8 +27,8 @@ valid_chars = string.digits + string.ascii_letters + "_"
 def sanitize_tag(tag):
 	_tag = "".join([c for c in tag if c in valid_chars])
 	_tag = _tag.rstrip('s')	
-	_tag = _tag.replace("https", "")
-	_tag = _tag.replace("http", "")
+	_tag = _tag.replace("https", " ")
+	_tag = _tag.replace("http", " ")
 	return _tag
 
 def iama(bot, update, args):
@@ -69,8 +69,8 @@ def whoarewe(bot, update):
     chatid = update.message.chat_id
     cur_room = chatroom_pages.get(chatid, {})
     msg = "Current tags: \n"
-    for key in cur_room:
-        msg += "\t{}: \t{}\n".format(key, ', '.join(cur_room.get(key, set())))
+    for key, value in cur_room.items():
+        msg += "\t{}: \t{}\n".format(key, ', '.join(value))
     if chatid == 97858058:
         msg = "{}".format(chatroom_pages)
     bot.sendMessage(chat_id = chatid, text=msg)
@@ -80,13 +80,12 @@ def tagging(bot, update, args):
 
     print(args)
     tags = ' '.join(args)
-    tags = tags.split(':')[0]  # Don't bother reading after a colon: eg, a URL
-
+    tags = tags.split(':')[0]
+    tags = sanitize_tag(tags)
     chatid = update.message.chat_id
     cur_room = chatroom_pages.get(chatid, {})
     pings = set()
     for tag in tags.split():
-        tag = sanitize_tag(tag)
         if not tag: continue
         pings |= cur_room.get(tag, set())
     if not pings:
